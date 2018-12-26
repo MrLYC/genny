@@ -29,6 +29,7 @@ var (
 	importKeyword  = []byte("import")
 	openBrace      = []byte("(")
 	closeBrace     = []byte(")")
+	genericImports = []byte(`import "github.com/MrLYC/genny/generic"`)
 	genericPackage = "generic"
 	genericType    = "generic.Type"
 	genericNumber  = "generic.Number"
@@ -193,13 +194,15 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 	var cleanOutputLines []string
 	scanner := bufio.NewScanner(bytes.NewReader(totalOutput))
 	for scanner.Scan() {
+		if bytes.HasPrefix(scanner.Bytes(), genericImports) {
+			continue
+		}
 
 		// end of imports block?
 		if insideImportBlock {
 			if bytes.HasSuffix(scanner.Bytes(), closeBrace) {
 				insideImportBlock = false
 			}
-			continue
 		}
 
 		if bytes.HasPrefix(scanner.Bytes(), packageKeyword) {
@@ -212,7 +215,6 @@ func Generics(filename, pkgName string, in io.ReadSeeker, typeSets []map[string]
 			if bytes.HasSuffix(scanner.Bytes(), openBrace) {
 				insideImportBlock = true
 			}
-			continue
 		}
 
 		// check all unwantedLinePrefixes - and skip them
